@@ -1,0 +1,16 @@
+
+models/*
+wordVector/*
+dataset/*
+
+__pycache__
+.vscode
+
+*.h5
+*.pkl
+*.pickle
+
+.DS_Store
+desktop.ini
+
+*.txt
