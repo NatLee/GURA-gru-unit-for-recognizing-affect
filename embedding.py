@@ -1,8 +1,13 @@
 from keras.models import Model, Sequential, load_model
 from keras.preprocessing.text import Tokenizer
 from keras.layers import Embedding, Input
+from keras import backend as K
 from tqdm import tqdm
 import numpy as np
+import requests
+import zipfile
+import pathlib
+import os
 
 class EmbeddingPrediction(object):
 
@@ -11,7 +16,8 @@ class EmbeddingPrediction(object):
         self.__wordVectorPath = wordVectorPath
         self.__modelWeightPath = modelWeightPath
 
-        self.__embeddingType = 'float32'
+        self.__embeddingType = 'float16'
+        
         self.__embeddingDim = embeddingDim
         
         self.__maxSequenceLength = maxSequenceLength
@@ -24,15 +30,17 @@ class EmbeddingPrediction(object):
 
 
     def __buildModel(self):
+        K.set_floatx(self.__embeddingType)
+
         model = Sequential()
         if self.__modelWeightPath is not None:
             print('[INFO] Find embedding weight path. Now loading...')
-            model.add(Embedding(self.__wordIndexSize, self.__embeddingDim, dtype=self.__embeddingType, input_length=self.__maxSequenceLength, trainable=self.__trainable))
+            model.add(Embedding(input_dim=self.__wordIndexSize, output_dim=self.__embeddingDim, dtype=self.__embeddingType, trainable=self.__trainable))
             model.load_weights(self.__modelWeightPath, by_name=True)
         else:
-            print('[INFO] Embedding weight path not found. Now Generating...')
+            print('[WARNING] Embedding weight path not found. Now Generating...')
             wordVectorMatrix = self.__getWordVectorMatrix()
-            model.add(Embedding(self.__wordIndexSize, self.__embeddingDim, dtype=self.__embeddingType, weights=[wordVectorMatrix], input_length=self.__maxSequenceLength, trainable=self.__trainable))
+            model.add(Embedding(input_dim=self.__wordIndexSize, output_dim=self.__embeddingDim, dtype=self.__embeddingType, weights=[wordVectorMatrix], trainable=self.__trainable))
             model = self.__getEmbeddingModel(model)
         return model
 
@@ -61,6 +69,25 @@ class EmbeddingPrediction(object):
 
     def __loadWordVector(self):
         wordDict = dict()
+        
+        if self.__wordVectorPath is None:
+            print('[WARNING] Word vector file path not found.')
+
+            gloveUrl = 'http://nlp.stanford.edu/data/glove.840B.300d.zip'
+            gloveZipFileDownloadPath = pathlib.Path('glove.840B.300d.zip')
+            wordVecFolderPath = pathlib.Path('wordVector')
+
+            if not wordVecFolderPath.is_dir():
+                wordVecFolderPath.mkdir()
+            
+            self.__downloadFile(gloveUrl, gloveZipFileDownloadPath)
+            unzipFiles = self.__unzip(gloveZipFileDownloadPath, wordVecFolderPath)
+            os.remove(gloveZipFileDownloadPath)
+            for unzipFile in unzipFiles:
+                if unzipFile.find('glove') >= 0:
+                    self.__wordVectorPath = (wordVecFolderPath / unzipFile).absolute().as_posix()
+                    break
+
         print('[INFO] Load pretrain word vector weight file.')
         with open(self.__wordVectorPath, 'r', encoding='utf-8') as embFile:
             for line in tqdm(embFile.readlines(), ascii = True):
@@ -73,3 +100,24 @@ class EmbeddingPrediction(object):
                         print(e)
                         print(line)
         return wordDict
+
+    def __downloadFile(self, url:str, filePath:pathlib.Path):
+        # NOTE the stream=True parameter below
+        with requests.get(url, stream=True) as r:
+            print('[INFO] Downloading file... [{}]'.format(filePath.name))
+            r.raise_for_status()
+            with open(filePath.absolute().as_posix(), 'wb') as f:
+                pbar = tqdm(unit='B', total=int(r.headers['Content-Length']), ascii=True)
+                for chunk in r.iter_content(chunk_size=8192): 
+                    if chunk: # filter out keep-alive new chunks
+                        pbar.update (len(chunk))
+                        _ = f.write(chunk)
+        return filePath
+
+    def __unzip(self, fileName:str, folderPath:pathlib.Path):
+        with open(fileName, 'rb') as f:
+            print('[INFO] Now unzipping file... [{}]'.format(fileName))
+            z = zipfile.ZipFile(f)
+            for name in z.namelist():
+                z.extract(name, folderPath.absolute().as_posix())
+            return z.namelist()

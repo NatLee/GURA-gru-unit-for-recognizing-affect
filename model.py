@@ -13,12 +13,18 @@ from keras import backend as K
 from utils import cleanText, getPaddingSequence, saveTrainingImg
 from custom import VATModel, QRNN, AttentionDecoder, ElmoEmbeddingLayer
 
+
+
 def trainModel(trainingData:tuple, model:Model, modelName:str, datasetName:str, epochs:int=100, validationData:tuple=None, patience:int=10, batchSize:int=1024):
-    folder = pathlib.Path('models') / modelName
+    
+    modelsPath = pathlib.Path('models')
+    if not modelsPath.exists():
+        modelsPath.mkdir()
+    folder = modelsPath / modelName
     if not folder.exists():
         folder.mkdir()
     modelPath = folder / (datasetName + '-epoch_{epoch:04d}-acc_{acc:.4f}-valAcc_{val_acc:.4f}.h5')
-    modelStructureImg = folder/ 'model_plot.png'
+    modelStructureImg = folder/ 'modelStructurePlot.png'
     trainingDataImgPath = folder / ('{}_{}.png'.format(datasetName, modelName))
     earlyStopping = EarlyStopping(patience = patience)
     modelCheckpoint = ModelCheckpoint(filepath=modelPath.absolute().as_posix(), save_best_only=True, save_weights_only=False, monitor='val_acc', mode='auto')
@@ -53,6 +59,7 @@ def model1(maxSequenceLength:int, embeddingDim:int):
     print(model.summary())
     return model
 '''
+
 
 def model1(maxSequenceLength:int, embeddingDim:int):
     inputs = Input(shape=(maxSequenceLength, embeddingDim, ))
