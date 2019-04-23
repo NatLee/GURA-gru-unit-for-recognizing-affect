@@ -16,7 +16,7 @@ class EmbeddingPrediction(object):
         self.__wordVectorPath = wordVectorPath
         self.__modelWeightPath = modelWeightPath
 
-        self.__embeddingType = 'float16'
+        self.__embeddingType = 'float32'
         
         self.__embeddingDim = embeddingDim
         

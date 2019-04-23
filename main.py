@@ -32,8 +32,8 @@ anime_X, anime_Y = loadAnimePickle(maxSequenceLength, tokenizer, True)
 '''
 
 print('[INFO] Load embedding Layer.')
-#emb = EmbeddingPrediction(modelWeightPath=EMB_WEIGHT_PATH, wordVectorPath=PRETRAIN_EMB_WEIGHT_PATH, tokenizer=tokenizer, embeddingDim=EMB_DIM, maxSequenceLength=maxSequenceLength)
-emb = EmbeddingPrediction(wordVectorPath=PRETRAIN_EMB_WEIGHT_PATH, tokenizer=tokenizer, embeddingDim=EMB_DIM, maxSequenceLength=maxSequenceLength)
+emb = EmbeddingPrediction(modelWeightPath=EMB_WEIGHT_PATH, wordVectorPath=PRETRAIN_EMB_WEIGHT_PATH, tokenizer=tokenizer, embeddingDim=EMB_DIM, maxSequenceLength=maxSequenceLength)
+#emb = EmbeddingPrediction(wordVectorPath=PRETRAIN_EMB_WEIGHT_PATH, tokenizer=tokenizer, embeddingDim=EMB_DIM, maxSequenceLength=maxSequenceLength)
 #emb = EmbeddingPrediction(tokenizer=tokenizer, embeddingDim=EMB_DIM, maxSequenceLength=maxSequenceLength)
 print('[INFO] Preprocess the embedding data.')
 imdb_X_train_emb = emb.getEmbeddingVector(imdb_X_train)

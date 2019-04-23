@@ -63,10 +63,11 @@ def model1(maxSequenceLength:int, embeddingDim:int):
 
 def model1(maxSequenceLength:int, embeddingDim:int):
     inputs = Input(shape=(maxSequenceLength, embeddingDim, ))
-    b = Bidirectional(LSTM(256, dropout=0.1, return_sequences=True))(inputs)
+    b = Bidirectional(LSTM(30, dropout=0.1, return_sequences=True))(inputs)
+    b = QRNN(30, activation='relu', window_size=3, return_sequences=True)(b)
+    b = AttentionDecoder(30, 30)(b)
     g = GlobalMaxPool1D()(b)
-    d = Dense(256, activation='selu')(g)
-    d = Dense(256, activation='selu')(d)
+    d = Dense(30, activation='selu')(g)
     d = Dropout(0.05)(d)
     output = Dense(1, activation='sigmoid')(d)
     model = Model(inputs=inputs, outputs=output)
