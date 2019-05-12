@@ -3,19 +3,19 @@ import pathlib
 import numpy as np
 from keras.models import Model
 from keras.preprocessing.text import Tokenizer
-from keras.layers import Input, Embedding, Bidirectional, LSTM, Dense, Reshape, Conv1D, Dropout, GlobalMaxPool1D, Conv2D, DepthwiseConv2D, MaxPool2D, TimeDistributed, BatchNormalization, multiply, Flatten, Masking, concatenate, Lambda
+from keras.layers import *
 from keras.regularizers import l2
 from keras.constraints import maxnorm
 from keras.callbacks import ModelCheckpoint, EarlyStopping
 from keras.utils.vis_utils import plot_model
 from keras import backend as K
+from sklearn.model_selection import train_test_split
 
 from utils import cleanText, getPaddingSequence, saveTrainingImg
-from custom import VATModel, QRNN, AttentionDecoder, ElmoEmbeddingLayer
+from custom import *
 
 
-
-def trainModel(trainingData:tuple, model:Model, modelName:str, datasetName:str, epochs:int=100, validationData:tuple=None, patience:int=10, batchSize:int=1024):
+def trainModel(trainingData:tuple, model:Model, modelName:str, datasetName:str, epochs:int=100, validationData:tuple=None, patience:int=5, batchSize:int=1024):
     
     modelsPath = pathlib.Path('models')
     if not modelsPath.exists():
@@ -29,10 +29,11 @@ def trainModel(trainingData:tuple, model:Model, modelName:str, datasetName:str, 
     earlyStopping = EarlyStopping(patience = patience)
     modelCheckpoint = ModelCheckpoint(filepath=modelPath.absolute().as_posix(), save_best_only=True, save_weights_only=False, monitor='val_acc', mode='auto')
     plot_model(model, to_file=modelStructureImg.absolute().as_posix(), show_shapes=True, show_layer_names=True)
+
     if validationData is not None:
-        hist = model.fit(x=trainingData[0], y=trainingData[1], epochs=epochs, batch_size=batchSize, verbose=1, validation_data=validationData, shuffle=True, callbacks = [earlyStopping, modelCheckpoint])
+        hist = model.fit(x=trainingData[0], y=trainingData[1], epochs=epochs, batch_size=batchSize, verbose=1, validation_data=validationData, shuffle=True, callbacks=[earlyStopping, modelCheckpoint])
     else:
-        hist = model.fit(x=trainingData[0], y=trainingData[1], epochs=epochs, batch_size=batchSize, verbose=1, validation_split=0.2, shuffle=True, callbacks = [earlyStopping, modelCheckpoint])
+        hist = model.fit(x=trainingData[0], y=trainingData[1], epochs=epochs, batch_size=batchSize, verbose=1, validation_split=0.2, shuffle=True, callbacks=[earlyStopping, modelCheckpoint])
 
     saveTrainingImg(hist, trainingDataImgPath.absolute().as_posix())
     return hist
@@ -44,75 +45,24 @@ def testModel(model:Model, maxSequenceLength:int, tokenizer:Tokenizer, testConte
     print(Y_predict)
     return Y_predict
 
-'''
-def model1(maxSequenceLength:int, embeddingDim:int):
-    inputs = Input(shape=(maxSequenceLength, embeddingDim, ))
-    m = Masking(mask_value=0)(inputs)
-    b = Bidirectional(LSTM(20, dropout=0.1, return_sequences=True))(m)
-    a = AttentionDecoder(20, 20)(b)
-    a = Bidirectional(LSTM(20, dropout=0.1, return_sequences=True))(a)
-    q = QRNN(20, return_sequences=True, window_size=3)(a)
-    q = QRNN(20, return_sequences=False, window_size=1)(q)
-    output = Dense(1, activation='sigmoid')(q)
-    model = Model(inputs=inputs, outputs=output)
-    model.compile(loss='binary_crossentropy', optimizer='adam', metrics=['accuracy'])
-    print(model.summary())
-    return model
-'''
-
 
 def model1(maxSequenceLength:int, embeddingDim:int):
+    
     inputs = Input(shape=(maxSequenceLength, embeddingDim, ))
-    b = Bidirectional(LSTM(30, dropout=0.1, return_sequences=True))(inputs)
-    b = QRNN(30, activation='relu', window_size=3, return_sequences=True)(b)
-    b = AttentionDecoder(30, 30)(b)
+
+    b = Bidirectional(GRU(128, return_sequences=True))(inputs)
+    b = SeqSelfAttention()(b)
     g = GlobalMaxPool1D()(b)
-    d = Dense(30, activation='selu')(g)
+    d = Dense(64, activation='selu')(g)
     d = Dropout(0.05)(d)
     output = Dense(1, activation='sigmoid')(d)
+
     model = Model(inputs=inputs, outputs=output)
-    model.compile(loss='binary_crossentropy', optimizer='adamax', metrics=['accuracy'])
+
+    model.compile(loss=keras.losses.binary_crossentropy, optimizer='adam', metrics=['accuracy'])
+    
     print(model.summary())
     return model
 
 
-def modelQNN(maxSequenceLength:int, embeddingDim:int):
-    inputs = Input(shape=(maxSequenceLength, embeddingDim, ))
-    q = QRNN(64, activation='relu', window_size=10, return_sequences=True)(inputs)
-    q = QRNN(64, activation='relu', return_sequences=True, window_size=10)(q)
-    q = QRNN(64, activation='relu', return_sequences=True, window_size=5)(q)
-    q = QRNN(64, activation='relu', return_sequences=False, window_size=1)(q)
-    output = Dense(1, activation='sigmoid')(q)
-    model = Model(inputs=inputs, outputs=output)
-    model.compile(loss='binary_crossentropy', optimizer='adam', metrics=['accuracy'])
-    print(model.summary())
-    return model
 
-
-def model2(maxSequenceLength:int, embeddingDim:int):
-    # https://www.kaggle.com/nilanml/imdb-review-deep-model-94-89-accuracy
-    inputs = Input(shape=(maxSequenceLength, embeddingDim, ))
-    b = Bidirectional(LSTM(int(maxSequenceLength/2), dropout=0.2, return_sequences=True))(inputs)
-    g = GlobalMaxPool1D()(b)
-    d = Dense(20, activation='selu')(g)
-    d = Dropout(0.05)(d)
-    output = Dense(1, activation='sigmoid')(d)
-    model = Model(inputs=inputs, outputs=output)
-    #model.compile(loss='categorical_crossentropy', optimizer='rmsprop', metrics=['accuracy'])
-    model.compile(loss='binary_crossentropy', optimizer='adamax', metrics=['accuracy'])
-    print(model.summary())
-    return model
-
-def model1_VAT(maxSequenceLength:int, embeddingDim:int):
-    inputs = Input(shape=(maxSequenceLength, embeddingDim, ))
-    m = Masking(mask_value=0)(inputs)
-    b = Bidirectional(LSTM(20, dropout=0.1, return_sequences=True))(m)
-    a = AttentionDecoder(20, 20)(b)
-    a = Bidirectional(LSTM(20, dropout=0.1, return_sequences=True))(a)
-    q = QRNN(20, return_sequences=True, window_size=3)(a)
-    q = QRNN(20, return_sequences=False, window_size=1)(q)
-    output = Dense(1, activation='sigmoid')(q)
-    model = VATModel(inputs, output).setup_vat_loss()
-    model.compile(loss='binary_crossentropy', optimizer='adam', metrics=['accuracy'])
-    print(model.summary())
-    return model

@@ -11,7 +11,7 @@ import os
 
 class EmbeddingPrediction(object):
 
-    def __init__(self, modelWeightPath:str=None, wordVectorPath:str=None, tokenizer:Tokenizer=None, embeddingDim:int=300, maxSequenceLength:int=128, trainable:bool=False):
+    def __init__(self, modelWeightPath:str=None, wordVectorPath:str=None, tokenizer:Tokenizer=None, embeddingDim:int=300, trainable:bool=False):
         
         self.__wordVectorPath = wordVectorPath
         self.__modelWeightPath = modelWeightPath
@@ -19,8 +19,6 @@ class EmbeddingPrediction(object):
         self.__embeddingType = 'float32'
         
         self.__embeddingDim = embeddingDim
-        
-        self.__maxSequenceLength = maxSequenceLength
 
         self.__tokenizer = tokenizer
         self.__wordIndexSize = len(self.__tokenizer.word_index)+1
