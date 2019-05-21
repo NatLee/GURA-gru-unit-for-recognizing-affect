@@ -19,4 +19,5 @@ desktop.ini
 
 *.zip
 
-tmp
+
+accHistory.json

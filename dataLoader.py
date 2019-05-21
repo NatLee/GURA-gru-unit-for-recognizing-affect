@@ -7,7 +7,24 @@ from keras.utils.np_utils import to_categorical
 from keras.utils import to_categorical
 from utils import cleanText, getPaddingSequence
 from tqdm import tqdm
-from random import randint
+from random import randint, shuffle
+
+
+def randomPick(xList, yList, pickNumber):
+    randomData = list(zip(xList, yList))
+    shuffle(randomData)
+    validX = list()
+    validY = list()
+    trainX = list()
+    trainY = list()
+    for x, y in randomData[:pickNumber]:
+        validX.append(x)
+        validY.append(y)
+    for x, y in randomData[pickNumber:]:
+        trainX.append(x)
+        trainY.append(y)
+
+    return trainX, trainY, validX, validY
 
 
 def genData(x:list, polarity:int, number:int=None):
@@ -33,7 +50,7 @@ def genData(x:list, polarity:int, number:int=None):
             e = randint(0, 8)
             for i in range(s, e):
                 b = rn + i
-                if len(swd)-1< (b):
+                if len(swd)-1 < b:
                     continue
                 sentence.append(swd[b])
         gx.append(' '.join(sentence))
@@ -64,8 +81,17 @@ def loadAnimePickle(maxSeqLen:int, tokenizer:Tokenizer, fromPickle:bool, number:
                     Y_neg.append(0)
 
 
-            print('[INFO] Original positive: {}'.format(len(X_pos)))
-            print('[INFO] Original negative: {}'.format(len(X_neg)))
+            print('[INFO] Original Train positive: {}'.format(len(X_pos)))
+            print('[INFO] Original Train negative: {}'.format(len(X_neg)))
+
+
+            X_pos, Y_pos, X_vali_pos, Y_vali_pos = randomPick(X_pos, Y_pos, 10000)
+            X_neg, Y_neg, X_vali_neg, Y_vali_neg = randomPick(X_neg, Y_neg, 2000)
+
+            print('[INFO] Valid positive: {}'.format(len(X_vali_pos)))
+            print('[INFO] Valid negative: {}'.format(len(X_vali_neg)))
+            X_vali = X_vali_pos + X_vali_neg
+            Y_vali = Y_vali_pos + Y_vali_neg
 
 
             gx_pos, gy_pos = genData(X_pos, 1, 3899)
@@ -75,8 +101,11 @@ def loadAnimePickle(maxSeqLen:int, tokenizer:Tokenizer, fromPickle:bool, number:
             X = X_pos + X_neg + gx_pos + gx_neg
             Y = Y_pos + Y_neg + gy_pos + gy_neg
 
-            X = getPaddingSequence(X, maxSeqLen, tokenizer)            
+            X = getPaddingSequence(X, maxSeqLen, tokenizer)         
             Y = np.asarray(Y)
+
+            X_vali = getPaddingSequence(X_vali, maxSeqLen, tokenizer)
+            Y_vali = np.asarray(Y_vali)
 
 
         with open('dataset/animeReviewsSkipThoughtSummarizationPreprocessed.pkl', 'wb') as p:
@@ -84,9 +113,10 @@ def loadAnimePickle(maxSeqLen:int, tokenizer:Tokenizer, fromPickle:bool, number:
     else:
         with open('dataset/animeReviewsSkipThoughtSummarizationPreprocessed.pkl', 'rb') as p:
             X, Y = pickle.load(p)
-    return X, Y
 
+    return X_vali, Y_vali, X, Y
 
+'''
 def loadAmazon(maxSeqLen:int, tokenizer:Tokenizer):
     print('[INFO] Load Amazon data.')
     datasetName = 'dataset/AmazonFoodReviews.csv'
@@ -94,7 +124,7 @@ def loadAmazon(maxSeqLen:int, tokenizer:Tokenizer):
     Y = to_categorical(np.asarray(df['Score'], dtype='float16')-1, 5)
     X = getPaddingSequence([cleanText(text) for text in tqdm(df['Text'], ascii = True)], maxSeqLen, tokenizer)
     return X, Y
-
+'''
 
 def loadOfficialIMDB(maxSeqLen:int, tokenizer:Tokenizer, fromPickle:bool, number:int=None):
 
@@ -196,11 +226,21 @@ def loadMPQA(maxSeqLen:int, tokenizer:Tokenizer, fromPickle:bool, number:int=Non
                     X_vali_Sentences.append(cleanText(sentence))
                     Y_vali.append(int(labels[i]))
 
-        print('[INFO] Original positive: {}'.format(len(X_train_Sentences_pos)))
-        print('[INFO] Original negative: {}'.format(len(X_train_Sentences_neg)))
+        print('[INFO] Original Train positive: {}'.format(len(X_train_Sentences_pos)))
+        print('[INFO] Original Train negative: {}'.format(len(X_train_Sentences_neg)))
 
-        gx_pos, gy_pos = genData(X_train_Sentences_pos, 1, 6688)
-        gx_neg, gy_neg = genData(X_train_Sentences_neg, 0, 2706)
+        X_train_Sentences_pos, Y_train_pos, X_vali_Sentences_pos, Y_vali_pos = randomPick(X_train_Sentences_pos, Y_train_pos, 300)
+        X_train_Sentences_neg, Y_train_neg, X_vali_Sentences_neg, Y_vali_neg = randomPick(X_train_Sentences_neg, Y_train_neg, 700)
+
+        print('[INFO] Valid positive: {}'.format(len(X_vali_Sentences_pos)))
+        print('[INFO] Valid negative: {}'.format(len(X_vali_Sentences_neg)))
+
+        X_vali_Sentences = X_vali_Sentences + X_vali_Sentences_pos + X_vali_Sentences_neg
+        Y_vali = Y_vali + Y_vali_pos + Y_vali_neg
+
+
+        gx_pos, gy_pos = genData(X_train_Sentences_pos, 1, 7688)
+        gx_neg, gy_neg = genData(X_train_Sentences_neg, 0, 3706)
 
         X_train_Sentences = X_train_Sentences_pos + X_train_Sentences_neg + gx_pos + gx_neg
         Y_train = Y_train_pos + Y_train_neg + gy_pos + gy_neg
@@ -216,7 +256,7 @@ def loadMPQA(maxSeqLen:int, tokenizer:Tokenizer, fromPickle:bool, number:int=Non
         with open('dataset/MPQAPreprocessed.pkl', 'rb') as p:
             X_vali, Y_vali, X_train, Y_train = pickle.load(p)
 
-    return X_train, Y_train
+    return X_vali, Y_vali, X_train, Y_train
 
 def loadMR(maxSeqLen:int, tokenizer:Tokenizer, fromPickle:bool, number:int=None):
     print('[INFO] Load MR data.')
@@ -244,11 +284,22 @@ def loadMR(maxSeqLen:int, tokenizer:Tokenizer, fromPickle:bool, number:int=None)
                     X_vali_Sentences.append(cleanText(sentence))
                     Y_vali.append(int(labels[i]))
 
-        print('[INFO] Original positive: {}'.format(len(X_train_Sentences_pos)))
-        print('[INFO] Original negative: {}'.format(len(X_train_Sentences_neg)))
 
-        gx_pos, gy_pos = genData(X_train_Sentences_pos, 1, 4669)
-        gx_neg, gy_neg = genData(X_train_Sentences_neg, 0, 4669)
+        print('[INFO] Original Train positive: {}'.format(len(X_train_Sentences_pos)))
+        print('[INFO] Original Train negative: {}'.format(len(X_train_Sentences_neg)))
+
+        X_train_Sentences_pos, Y_train_pos, X_vali_Sentences_pos, Y_vali_pos = randomPick(X_train_Sentences_pos, Y_train_pos, 500)
+        X_train_Sentences_neg, Y_train_neg, X_vali_Sentences_neg, Y_vali_neg = randomPick(X_train_Sentences_neg, Y_train_neg, 500)
+
+        print('[INFO] Valid positive: {}'.format(len(X_vali_Sentences_pos)))
+        print('[INFO] Valid negative: {}'.format(len(X_vali_Sentences_neg)))
+
+        X_vali_Sentences = X_vali_Sentences + X_vali_Sentences_pos + X_vali_Sentences_neg
+        Y_vali = Y_vali + Y_vali_pos + Y_vali_neg
+
+
+        gx_pos, gy_pos = genData(X_train_Sentences_pos, 1, 6669)
+        gx_neg, gy_neg = genData(X_train_Sentences_neg, 0, 6669)
 
         X_train_Sentences = X_train_Sentences_pos + X_train_Sentences_neg + gx_pos + gx_neg
         Y_train = Y_train_pos + Y_train_neg + gy_pos + gy_neg
@@ -264,14 +315,16 @@ def loadMR(maxSeqLen:int, tokenizer:Tokenizer, fromPickle:bool, number:int=None)
         with open('dataset/MRPreprocessed.pkl', 'rb') as p:
             X_vali, Y_vali, X_train, Y_train = pickle.load(p)
 
-    return X_train, Y_train
+    return X_vali, Y_vali, X_train, Y_train
 
 
 def loadSST2(maxSeqLen:int, tokenizer:Tokenizer, fromPickle:bool, number:int=None):
     print('[INFO] Load SST2 data.')
     if not fromPickle:
-        X_vali_Sentences = list()
-        Y_vali = list()
+        X_vali_Sentences_pos = list()
+        X_vali_Sentences_neg = list()
+        Y_vali_pos = list()
+        Y_vali_neg = list()
         X_train_Sentences_pos = list()
         X_train_Sentences_neg = list()
         Y_train_pos = list()
@@ -280,9 +333,9 @@ def loadSST2(maxSeqLen:int, tokenizer:Tokenizer, fromPickle:bool, number:int=Non
             sst2 = pickle.load(p)
             sentences, labels, splits = list(sst2.sentence), list(sst2.label), list(sst2.split)
             for i, sentence in enumerate(tqdm(sentences, ascii = True)):
-                if splits[i] == 'train':
-                    label = int(labels[i])
-                    sentence = cleanText(sentence)
+                label = int(labels[i])
+                sentence = cleanText(sentence)
+                if splits[i] == 'train':    
                     if label == 1:
                         X_train_Sentences_pos.append(sentence)
                         Y_train_pos.append(label)
@@ -290,12 +343,22 @@ def loadSST2(maxSeqLen:int, tokenizer:Tokenizer, fromPickle:bool, number:int=Non
                         X_train_Sentences_neg.append(sentence)
                         Y_train_neg.append(label)
                 else:
-                    X_vali_Sentences.append(cleanText(sentence))
-                    Y_vali.append(int(labels[i]))
+                    if label == 1:
+                        X_vali_Sentences_pos.append(sentence)
+                        Y_vali_pos.append(label)
+                    else:
+                        X_vali_Sentences_neg.append(sentence)
+                        Y_vali_neg.append(label)
 
 
-        print('[INFO] Original positive: {}'.format(len(X_train_Sentences_pos)))
-        print('[INFO] Original negative: {}'.format(len(X_train_Sentences_neg)))
+        print('[INFO] Original Train positive: {}'.format(len(X_train_Sentences_pos)))
+        print('[INFO] Original Train negative: {}'.format(len(X_train_Sentences_neg)))
+
+
+        print('[INFO] Valid positive: {}'.format(len(X_vali_Sentences_pos)))
+        print('[INFO] Valid negative: {}'.format(len(X_vali_Sentences_neg)))
+        X_vali_Sentences = X_vali_Sentences_pos + X_vali_Sentences_neg
+        Y_vali = Y_vali_pos + Y_vali_neg
 
         gx_pos, gy_pos = genData(X_train_Sentences_pos, 1, 7741)
         gx_neg, gy_neg = genData(X_train_Sentences_neg, 0, 15298)
@@ -343,8 +406,17 @@ def loadSUBJ(maxSeqLen:int, tokenizer:Tokenizer, fromPickle:bool, number:int=Non
                     X_vali_Sentences.append(cleanText(sentence))
                     Y_vali.append(int(labels[i]))
 
-        print('[INFO] Original positive: {}'.format(len(X_train_Sentences_pos)))
-        print('[INFO] Original negative: {}'.format(len(X_train_Sentences_neg)))
+        print('[INFO] Original Train positive: {}'.format(len(X_train_Sentences_pos)))
+        print('[INFO] Original Train negative: {}'.format(len(X_train_Sentences_neg)))
+
+        X_train_Sentences_pos, Y_train_pos, X_vali_Sentences_pos, Y_vali_pos = randomPick(X_train_Sentences_pos, Y_train_pos, 500)
+        X_train_Sentences_neg, Y_train_neg, X_vali_Sentences_neg, Y_vali_neg = randomPick(X_train_Sentences_neg, Y_train_neg, 500)
+
+        print('[INFO] Valid positive: {}'.format(len(X_vali_Sentences_pos)))
+        print('[INFO] Valid negative: {}'.format(len(X_vali_Sentences_neg)))
+
+        X_vali_Sentences = X_vali_Sentences + X_vali_Sentences_pos + X_vali_Sentences_neg
+        Y_vali = Y_vali + Y_vali_pos + Y_vali_neg
 
         gx_pos, gy_pos = genData(X_train_Sentences_pos, 1)
         gx_neg, gy_neg = genData(X_train_Sentences_neg, 0)
@@ -363,4 +435,4 @@ def loadSUBJ(maxSeqLen:int, tokenizer:Tokenizer, fromPickle:bool, number:int=Non
         with open('dataset/SUBJPreprocessed.pkl', 'rb') as p:
             X_vali, Y_vali, X_train, Y_train = pickle.load(p)
 
-    return X_train, Y_train
+    return X_vali, Y_vali, X_train, Y_train

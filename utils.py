@@ -1,6 +1,8 @@
 import re
 import pickle
+import json
 
+from pathlib import Path
 from unidecode import unidecode
 from sklearn.manifold import TSNE
 
@@ -10,7 +12,7 @@ import numpy as np
 
 from keras.preprocessing.sequence import pad_sequences
 from keras.preprocessing.text import Tokenizer
-
+from keras.callbacks import History
 
 def saveTrainingImg(historyRecord:dict, savePath:str) -> bool:
     acc = historyRecord.history['acc']
@@ -43,8 +45,8 @@ def saveTrainingImg(historyRecord:dict, savePath:str) -> bool:
     #ax2.set_title('Accuracy')
     #ax2.set_xticks(np.arange(0, epochs, 1))
     ax2.set_xlabel('Epoch(s)')
-    ax2.set_ylim(0,1)
-    ax2.set_yticks(np.arange(0, 1, 0.1))
+    #ax2.set_ylim(0,1)
+    #ax2.set_yticks(np.arange(0, 1, 0.1))
     ax2.set_ylabel('Acc')
     ax2.spines['top'].set_visible(False)
     ax2.spines['right'].set_visible(False)
@@ -135,7 +137,20 @@ def loadTokenizer(tokenizerPath:str='tokenizer_big.pickle'):
     return tokenizer
 
 
-def tsne_plot(embedVecs, polarity):
+def saveAccHist(currentHist:History, datasetName:str, accHistoryFilePath:str='accHistory.json'):
+    accHistoryFilePath = Path(accHistoryFilePath)
+    accHistoryFilePathString = accHistoryFilePath.absolute().as_posix()
+    if not accHistoryFilePath.exists():
+        with open(accHistoryFilePathString, 'w') as f:
+            json.dump({}, f)
+    with open(accHistoryFilePathString, 'r') as f:
+        accHistory = json.load(f)
+    accHistory[datasetName] = sorted(currentHist.history['val_acc'])[-1]
+    with open(accHistoryFilePathString, 'w') as f:
+        json.dump(accHistory, f)
+
+
+def tsnePlot(embedVecs, polarity):
 
     labels = []
     tokens = []
