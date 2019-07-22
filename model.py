@@ -39,14 +39,13 @@ def trainModel(trainingData:tuple, model:Model, modelName:str, datasetName:str, 
     return hist
 
 def testModel(model:Model, maxSequenceLength:int, tokenizer:Tokenizer, testContext:list=['']):
-    testContext = ['Tate no Yuusha no Nariagari is one of the best and most wonderful Isekai series of all time. The light novel and the manga is a masterpiece and the beautiful anime adaption in combination with the amazing music make it really majestic.', 'Tate no Yuusha no Nariagari is one of the best and most wonderful Isekai series of all time. Naofumis outfit along with the team members and the other heroes are very stylish and elegant and his relationship with Raphtalia make an excellent couple together, the alluring silhouetes and elegant appearances along with how their relationship links the fates makes the progression of the main character throughout the setting a pure excellence and the overall nature of Tate no Yuusha embraces a wonderful feeling.']
+    #testContext = ['Tate no Yuusha no Nariagari is one of the best and most wonderful Isekai series of all time. The light novel and the manga is a masterpiece and the beautiful anime adaption in combination with the amazing music make it really majestic.', 'Tate no Yuusha no Nariagari is one of the best and most wonderful Isekai series of all time. Naofumis outfit along with the team members and the other heroes are very stylish and elegant and his relationship with Raphtalia make an excellent couple together, the alluring silhouetes and elegant appearances along with how their relationship links the fates makes the progression of the main character throughout the setting a pure excellence and the overall nature of Tate no Yuusha embraces a wonderful feeling.']
     X_test = getPaddingSequence([cleanText(text) for text in testContext], maxSequenceLength, tokenizer)
     Y_predict = model.predict(x=X_test, batch_size=2048, verbose=1)
     print(Y_predict)
     return Y_predict
 
-
-def model1(maxSequenceLength:int, embeddingDim:int):
+def modelOurs(maxSequenceLength:int, embeddingDim:int):
     
     inputs = Input(shape=(maxSequenceLength, embeddingDim, ))
 
@@ -60,9 +59,61 @@ def model1(maxSequenceLength:int, embeddingDim:int):
     model = Model(inputs=inputs, outputs=output)
 
     model.compile(loss=keras.losses.binary_crossentropy, optimizer='adam', metrics=['accuracy'])
-    
-    print(model.summary())
+
+    model.summary()
     return model
 
 
+def modelCnn(maxSequenceLength:int, embeddingDim:int):
+    
+    inputs = Input(shape=(maxSequenceLength, embeddingDim, ))
+
+    b = Conv1D(256, 3)(inputs)
+    g = GlobalMaxPool1D()(b)
+    d = Dense(64, activation='selu')(g)
+    d = Dropout(0.05)(d)
+    output = Dense(1, activation='sigmoid')(d)
+
+    model = Model(inputs=inputs, outputs=output)
+
+    model.compile(loss=keras.losses.binary_crossentropy, optimizer='adam', metrics=['accuracy'])
+    
+    model.summary()
+    return model
+
+def modelLstm(maxSequenceLength:int, embeddingDim:int):
+    
+    inputs = Input(shape=(maxSequenceLength, embeddingDim, ))
+
+    b = LSTM(256, return_sequences=True)(inputs)
+    g = GlobalMaxPool1D()(b)
+    d = Dense(64, activation='selu')(g)
+    d = Dropout(0.05)(d)
+    output = Dense(1, activation='sigmoid')(d)
+
+    model = Model(inputs=inputs, outputs=output)
+
+    model.compile(loss=keras.losses.binary_crossentropy, optimizer='adam', metrics=['accuracy'])
+    
+    model.summary()
+    return model
+
+
+def modelLstmCnn(maxSequenceLength:int, embeddingDim:int):
+    
+    inputs = Input(shape=(maxSequenceLength, embeddingDim, ))
+
+    b = Bidirectional(LSTM(128, return_sequences=True))(inputs)
+    b = Conv1D(256, 3)(b)
+    g = GlobalMaxPool1D()(b)
+    d = Dense(64, activation='selu')(g)
+    d = Dropout(0.05)(d)
+    output = Dense(1, activation='sigmoid')(d)
+
+    model = Model(inputs=inputs, outputs=output)
+
+    model.compile(loss=keras.losses.binary_crossentropy, optimizer='adam', metrics=['accuracy'])
+
+    model.summary()
+    return model
 

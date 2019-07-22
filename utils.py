@@ -1,7 +1,7 @@
 import re
 import pickle
 import json
-
+import logging
 from pathlib import Path
 from unidecode import unidecode
 from sklearn.manifold import TSNE
@@ -131,7 +131,7 @@ def getPaddingSequence(wordList:list, maxSequenceLength:int ,tokenizer:Tokenizer
     return pad_sequences(tokenizer.texts_to_sequences(wordList), maxlen=maxSequenceLength)
 
 def loadTokenizer(tokenizerPath:str='tokenizer_big.pickle'):
-    print('[INFO] Load tokenizer.')
+    logging.info('Load tokenizer.')
     with open(tokenizerPath, 'rb') as p:
         tokenizer = pickle.load(p)
     return tokenizer
@@ -178,3 +178,26 @@ def tsnePlot(embedVecs, polarity):
                      ha='right',
                      va='bottom')
     plt.show()
+
+
+def OnlyTopValAcc(modelFolderPath:Path):
+    modelFiles = [x for x in modelFolderPath.glob('**/*.h5') if x.is_file()]
+
+    datasets = dict()
+    for modelFile in modelFiles:
+        #print(modelFile.name)
+        dataset = modelFile.name.split('-')[0]
+        valAcc = float(modelFile.name.split('_')[-1][0:6])
+
+        if datasets.get(dataset) is None:
+            datasets[dataset] = [(valAcc, modelFile)]
+        else:
+            datasets[dataset].append((valAcc, modelFile))
+
+    for key, value in datasets.items():
+        sortedDataset:list = sorted(value, key=lambda tup: tup[0], reverse=True)
+        print(sortedDataset[0])
+        removeList = sortedDataset[1:]
+        for removeH5 in removeList:
+            removeH5[1].unlink()
+    return

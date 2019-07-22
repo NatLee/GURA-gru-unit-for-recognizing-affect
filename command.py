@@ -2,22 +2,36 @@ import json
 from pathlib import Path
 from subprocess import check_output
 
-
-FLAG = True
+TARGET_FLAG = True
 accHistoryFilePathString = 'accHistory.json'
 
+imdbTargetAcc = 0.8905
+sst2TargetAcc = 0.8300
+mpqaTargetAcc = 0.8814
+mrTargetAcc = 0.8700
+subjTargetAcc = 0.9150
+animeTargetAcc = 0.8500
+
 def loadHistory(path):
+    
+    def getDataset(history, name):
+        valAcc = history.get(name)
+        if valAcc is None:
+            return 0
+        else:
+            return valAcc
+
     path = Path(path)
     if path.exists():
         with open(path.absolute().as_posix(), 'r') as f:
             accHistory = json.load(f)
-
-            imdbValAcc = accHistory['imdb']
-            sst2ValAcc = accHistory['sst2']
-            mpqaValAcc = accHistory['mpqa']
-            mrValAcc = accHistory['mr']
-            subjValAcc = accHistory['subj']
-            animeValAcc = accHistory['anime']
+    
+            imdbValAcc = getDataset(accHistory, 'imdb')
+            sst2ValAcc = getDataset(accHistory, 'sst2')
+            mpqaValAcc = getDataset(accHistory, 'mpqa')
+            mrValAcc = getDataset(accHistory, 'mr')
+            subjValAcc = getDataset(accHistory, 'subj')
+            animeValAcc = getDataset(accHistory, 'anime')
     else:
         imdbValAcc = 0
         sst2ValAcc = 0
@@ -31,9 +45,10 @@ def loadHistory(path):
 
 imdbValAcc, sst2ValAcc, mpqaValAcc, mrValAcc, subjValAcc, animeValAcc = loadHistory(accHistoryFilePathString)
 
-datasets = ['--imdb ', '--sst2 ', '--mpqa ', '--mr ', '--subj ', '--anime ']
+#datasets = ['--imdb ', '--sst2 ', '--mpqa ', '--mr ', '--subj ', '--anime ']
+datasets = ['--anime ']
 
-while FLAG:
+while TARGET_FLAG:
 
     print('[INFO] IMDB TOP VAL ACC: {:.2f}'.format(imdbValAcc))
     print('[INFO] SST2 TOP VAL ACC: {:.2f}'.format(sst2ValAcc))
@@ -44,24 +59,26 @@ while FLAG:
 
     runCommand = ''
     for dataset in datasets:
-        if imdbValAcc > 0.8905 and dataset.find('imdb') >= 0:
+        if imdbValAcc > imdbTargetAcc and dataset.find('imdb') >= 0:
             continue
-        if sst2ValAcc > 0.8300 and dataset.find('sst2') >= 0:
+        if sst2ValAcc > sst2TargetAcc and dataset.find('sst2') >= 0:
             continue
-        if mpqaValAcc > 0.8800 and dataset.find('mpqa') >= 0:
+        if mpqaValAcc > mpqaTargetAcc and dataset.find('mpqa') >= 0:
             continue
-        if mrValAcc > 0.8700 and dataset.find('mr') >= 0:
+        if mrValAcc > mrTargetAcc and dataset.find('mr') >= 0:
             continue
-        if subjValAcc > 0.9150 and dataset.find('subj') >= 0:
+        if subjValAcc > subjTargetAcc and dataset.find('subj') >= 0:
             continue
-        if animeValAcc > 0.8500 and dataset.find('anime') >= 0:
+        if animeValAcc > animeTargetAcc and dataset.find('anime') >= 0:
             continue
 
         runCommand = runCommand + dataset
 
     if runCommand == '':
-        FLAG = False
+        TARGET_FLAG = False
     else:
         check_output('python main.py ' + runCommand, shell=True).decode()
 
         imdbValAcc, sst2ValAcc, mpqaValAcc, mrValAcc, subjValAcc, animeValAcc = loadHistory(accHistoryFilePathString)
+
+    

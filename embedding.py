@@ -8,6 +8,7 @@ import requests
 import zipfile
 import pathlib
 import os
+import logging
 
 class EmbeddingPrediction(object):
 
@@ -32,7 +33,7 @@ class EmbeddingPrediction(object):
 
         model = Sequential()
         if self.__modelWeightPath is not None:
-            print('[INFO] Find embedding weight path. Now loading...')
+            logging.info('Find embedding weight path. Now loading...')
             model.add(Embedding(input_dim=self.__wordIndexSize, output_dim=self.__embeddingDim, dtype=self.__embeddingType, trainable=self.__trainable))
             model.load_weights(self.__modelWeightPath, by_name=True)
         else:
@@ -45,7 +46,7 @@ class EmbeddingPrediction(object):
     def __getEmbeddingModel(self, model:Model, modelWeightPath:str='embeddingLayerWeight.h5') -> Model:
         model.compile(loss='mse', optimizer='rmsprop', metrics=['accuracy'])
         print(model.summary())
-        print('[INFO] Saving weight in ./%s' % modelWeightPath)
+        logging.info('Saving weight in ./%s' % modelWeightPath)
         model.save_weights(modelWeightPath)
         return model
 
@@ -86,7 +87,7 @@ class EmbeddingPrediction(object):
                     self.__wordVectorPath = (wordVecFolderPath / unzipFile).absolute().as_posix()
                     break
 
-        print('[INFO] Load pretrain word vector weight file.')
+        logging.info('Load pretrain word vector weight file.')
         with open(self.__wordVectorPath, 'r', encoding='utf-8') as embFile:
             for line in tqdm(embFile.readlines(), ascii = True):
                 line = line[:-1]
@@ -102,7 +103,7 @@ class EmbeddingPrediction(object):
     def __downloadFile(self, url:str, filePath:pathlib.Path):
         # NOTE the stream=True parameter below
         with requests.get(url, stream=True) as r:
-            print('[INFO] Downloading file... [{}]'.format(filePath.name))
+            logging.info('Downloading file... [{}]'.format(filePath.name))
             r.raise_for_status()
             with open(filePath.absolute().as_posix(), 'wb') as f:
                 pbar = tqdm(unit='B', total=int(r.headers['Content-Length']), ascii=True)
@@ -114,7 +115,7 @@ class EmbeddingPrediction(object):
 
     def __unzip(self, fileName:str, folderPath:pathlib.Path):
         with open(fileName, 'rb') as f:
-            print('[INFO] Now unzipping file... [{}]'.format(fileName))
+            logging.info('Now unzipping file... [{}]'.format(fileName))
             z = zipfile.ZipFile(f)
             for name in z.namelist():
                 z.extract(name, folderPath.absolute().as_posix())
