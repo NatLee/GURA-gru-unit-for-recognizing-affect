@@ -1,0 +1,18 @@
+version: "3.9"
+services:
+  main:
+    build:
+      context: .
+      dockerfile: ./Dockerfile
+    container_name: sentiment-runner
+    volumes:
+      - ./src:/src
+      - ./data:/data
+      - ./model:/model
+    command: bash docker-entrypoint.sh
+    #deploy:
+    #  resources:
+    #    reservations:
+    #      devices:
+    #        - driver: nvidia
+    #          capabilities: [gpu]
