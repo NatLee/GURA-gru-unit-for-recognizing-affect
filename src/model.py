@@ -17,7 +17,7 @@ from custom import *
 
 def trainModel(trainingData:tuple, model:Model, modelName:str, datasetName:str, epochs:int=100, validationData:tuple=None, patience:int=5, batchSize:int=1024):
     
-    modelsPath = pathlib.Path('models')
+    modelsPath = pathlib.Path('/model')
     if not modelsPath.exists():
         modelsPath.mkdir()
     folder = modelsPath / modelName

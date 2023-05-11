@@ -92,6 +92,6 @@ if config.anime:
     anime_m1_hist = trainModel(trainingData=(anime_X_emb, anime_Y), model=m1, modelName=modelName, datasetName='anime', epochs=epochs, batchSize=batchSize, validationData=(anime_X_vali_emb, anime_Y_vali))
     saveAccHist(anime_m1_hist, 'anime')
 
-modelFolder = Path('models') / modelName
+modelFolder = Path('/model') / modelName
 OnlyTopValAcc(modelFolder)
 

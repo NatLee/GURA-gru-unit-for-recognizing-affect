@@ -63,7 +63,7 @@ def genData(x:list, polarity:int, number:int=None):
 def loadAnimePickle(maxSeqLen:int, tokenizer:Tokenizer, fromPickle:bool, number:int=None):
     logging.info('Load Anime data.')
     if not fromPickle:
-        datasetName = 'dataset/animeReviewsSkipThoughtSummarization.pkl'
+        datasetName = '/data/animeReviewsSkipThoughtSummarization.pkl'
         with open(datasetName, 'rb') as p:
             X, Y = pickle.load(p)
 
@@ -114,10 +114,10 @@ def loadAnimePickle(maxSeqLen:int, tokenizer:Tokenizer, fromPickle:bool, number:
             Y_vali = np.asarray(Y_vali)
 
 
-        with open('dataset/animeReviewsSkipThoughtSummarizationPreprocessed.pkl', 'wb') as p:
+        with open('/data/animeReviewsSkipThoughtSummarizationPreprocessed.pkl', 'wb') as p:
             pickle.dump((X_vali, Y_vali, X, Y), p)
     else:
-        with open('dataset/animeReviewsSkipThoughtSummarizationPreprocessed.pkl', 'rb') as p:
+        with open('/data/animeReviewsSkipThoughtSummarizationPreprocessed.pkl', 'rb') as p:
             X_vali, Y_vali, X, Y = pickle.load(p)
 
     return X_vali, Y_vali, X, Y
@@ -146,7 +146,7 @@ def loadOfficialIMDB(maxSeqLen:int, tokenizer:Tokenizer, fromPickle:bool, number
         return x, y
 
     def loadFromFolder(folder:str, dataClass:str=None):
-        imdb = Path('dataset/aclImdb/')
+        imdb = Path('/data/aclImdb/')
 
         pos = (imdb / folder / 'pos').glob('./*.txt')
         neg = (imdb / folder / 'neg').glob('./*.txt')
@@ -187,10 +187,10 @@ def loadOfficialIMDB(maxSeqLen:int, tokenizer:Tokenizer, fromPickle:bool, number
         #y_one_hot_train = to_categorical(y_train, num_classes=2)
 
 
-        with open('dataset/imdbOfficailReviewsPreprocessed.pkl', 'wb') as p:
+        with open('/data/imdbOfficailReviewsPreprocessed.pkl', 'wb') as p:
             pickle.dump((x_test, y_test, x_train, y_train), p)
     else:
-        with open('dataset/imdbOfficailReviewsPreprocessed.pkl', 'rb') as p:
+        with open('/data/imdbOfficailReviewsPreprocessed.pkl', 'rb') as p:
             x_test, y_test, x_train, y_train = pickle.load(p)
 
     return x_test, y_test, x_train, y_train
@@ -204,7 +204,7 @@ def loadMPQA(maxSeqLen:int, tokenizer:Tokenizer, fromPickle:bool, number:int=Non
         X_train_Sentences_neg = list()
         Y_train_pos = list()
         Y_train_neg = list()
-        with open('dataset/MPQA.pkl', 'rb') as p:
+        with open('/data/MPQA.pkl', 'rb') as p:
             mpqa = pickle.load(p)
             sentences, labels, splits = list(mpqa.sentence), list(mpqa.label), list(mpqa.split)
             for i, sentence in enumerate(tqdm(sentences, ascii = True)):
@@ -245,10 +245,10 @@ def loadMPQA(maxSeqLen:int, tokenizer:Tokenizer, fromPickle:bool, number:int=Non
         X_vali = getPaddingSequence(X_vali_Sentences, maxSeqLen, tokenizer)
         X_train = getPaddingSequence(X_train_Sentences, maxSeqLen, tokenizer)
 
-        with open('dataset/MPQAPreprocessed.pkl', 'wb') as p:
+        with open('/data/MPQAPreprocessed.pkl', 'wb') as p:
             pickle.dump((X_vali, Y_vali, X_train, Y_train), p)
     else:
-        with open('dataset/MPQAPreprocessed.pkl', 'rb') as p:
+        with open('/data/MPQAPreprocessed.pkl', 'rb') as p:
             X_vali, Y_vali, X_train, Y_train = pickle.load(p)
 
     return X_vali, Y_vali, X_train, Y_train
@@ -304,10 +304,10 @@ def loadMR(maxSeqLen:int, tokenizer:Tokenizer, fromPickle:bool, number:int=None)
         X_vali = getPaddingSequence(X_vali_Sentences, maxSeqLen, tokenizer)
         X_train = getPaddingSequence(X_train_Sentences, maxSeqLen, tokenizer)
 
-        with open('dataset/MRPreprocessed.pkl', 'wb') as p:
+        with open('/data/MRPreprocessed.pkl', 'wb') as p:
             pickle.dump((X_vali, Y_vali, X_train, Y_train), p)
     else:
-        with open('dataset/MRPreprocessed.pkl', 'rb') as p:
+        with open('/data/MRPreprocessed.pkl', 'rb') as p:
             X_vali, Y_vali, X_train, Y_train = pickle.load(p)
 
     return X_vali, Y_vali, X_train, Y_train
@@ -365,10 +365,10 @@ def loadSST2(maxSeqLen:int, tokenizer:Tokenizer, fromPickle:bool, number:int=Non
         X_vali = getPaddingSequence(X_vali_Sentences, maxSeqLen, tokenizer)
         X_train = getPaddingSequence(X_train_Sentences, maxSeqLen, tokenizer)
 
-        with open('dataset/SST2Preprocessed.pkl', 'wb') as p:
+        with open('/data/SST2Preprocessed.pkl', 'wb') as p:
             pickle.dump((X_vali, Y_vali, X_train, Y_train), p)
     else:
-        with open('dataset/SST2Preprocessed.pkl', 'rb') as p:
+        with open('/data/SST2Preprocessed.pkl', 'rb') as p:
             X_vali, Y_vali, X_train, Y_train = pickle.load(p)
 
     return X_vali, Y_vali, X_train, Y_train
@@ -383,7 +383,7 @@ def loadSUBJ(maxSeqLen:int, tokenizer:Tokenizer, fromPickle:bool, number:int=Non
         X_train_Sentences_neg = list()
         Y_train_pos = list()
         Y_train_neg = list()
-        with open('dataset/SUBJ.pkl', 'rb') as p:
+        with open('/data/SUBJ.pkl', 'rb') as p:
             subj = pickle.load(p)
             sentences, labels, splits = list(subj.sentence), list(subj.label), list(subj.split)
             for i, sentence in enumerate(tqdm(sentences, ascii = True)):
@@ -423,10 +423,10 @@ def loadSUBJ(maxSeqLen:int, tokenizer:Tokenizer, fromPickle:bool, number:int=Non
         X_vali = getPaddingSequence(X_vali_Sentences, maxSeqLen, tokenizer)
         X_train = getPaddingSequence(X_train_Sentences, maxSeqLen, tokenizer)
 
-        with open('dataset/SUBJPreprocessed.pkl', 'wb') as p:
+        with open('/data/SUBJPreprocessed.pkl', 'wb') as p:
             pickle.dump((X_vali, Y_vali, X_train, Y_train), p)
     else:
-        with open('dataset/SUBJPreprocessed.pkl', 'rb') as p:
+        with open('/data/SUBJPreprocessed.pkl', 'rb') as p:
             X_vali, Y_vali, X_train, Y_train = pickle.load(p)
 
     return X_vali, Y_vali, X_train, Y_train

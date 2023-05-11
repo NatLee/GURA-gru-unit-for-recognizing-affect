@@ -54,8 +54,7 @@ class SeqSelfAttention(keras.layers.Layer):
         :param bias_regularizer: The regularization for biases.
         :param kernel_constraint: The constraint for weight matrices.
         :param bias_constraint: The constraint for biases.
-        :param use_additive_bias: Whether to use bias while calculating the relevance of inputs features
-                                  in additive mode.
+        :param use_additive_bias: Whether to use bias while calculating the relevance of inputs features in additive mode.
         :param use_attention_bias: Whether to use bias while calculating the weights of attention.
         :param attention_activation: The activation used for calculating the weights of attention.
         :param attention_regularizer_weight: The weights of attention regularizer.
