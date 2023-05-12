@@ -6,3 +6,5 @@ matplotlib
 requests
 unidecode
 pandas
+pydot
+loguru
