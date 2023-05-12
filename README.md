@@ -118,6 +118,12 @@ When you successfully train the model with specified dataset, you cat get the pl
     ![](./doc/model-imdb.png)
 
 
+## Citation
+
+```
+N. Lee, "GURA: GRU Unit for Recognizing Affect," GitHub, 2019. [Online]. Available: https://github.com/NatLee/GURA-gru-unit-for-recognizing-affect.
+```
+
 ## Contributor
 
 <!-- ALL-CONTRIBUTORS-LIST:START - Do not remove or modify this section -->
