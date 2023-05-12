@@ -68,6 +68,9 @@ def loadAnimePickle(maxSeqLen:int, tokenizer:Tokenizer, fromPickle:bool, number:
         with open(datasetName, 'rb') as p:
             X, Y = pickle.load(p)
 
+            logger.info(f'Length of X: {len(X)}')
+            logger.info(f'Length of Y: {len(Y)}')
+
             # Take before 2017
             X = X[:87415]
             Y = Y[:87415]
@@ -108,7 +111,7 @@ def loadAnimePickle(maxSeqLen:int, tokenizer:Tokenizer, fromPickle:bool, number:
             X = X_pos + X_neg + gx_pos + gx_neg
             Y = Y_pos + Y_neg + gy_pos + gy_neg
 
-            X = getPaddingSequence(X, maxSeqLen, tokenizer)         
+            X = getPaddingSequence(X, maxSeqLen, tokenizer)
             Y = np.asarray(Y)
 
             X_vali = getPaddingSequence(X_vali, maxSeqLen, tokenizer)

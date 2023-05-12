@@ -34,19 +34,37 @@ modelFolder = Path('/model') / modelName
 modelFiles = [x for x in modelFolder.glob('**/*.h5') if x.is_file()]
 target_names = ['Negative', 'Positive']
 
+maxSeqLen = 128
 tokenizer = loadTokenizer(tokenizerPath='/model/big-tokenizer.pkl')
 
 logger.info('Load embedding Layer.')
 emb = EmbeddingPrediction(tokenizer=tokenizer, embeddingDim=embeddingDim)
 
-def predict(x_validation, y_validation, model_file_path):
+def test(model):
+    test_reviews = [
+        "Hello, this manga is so good.",
+        "No more comedy!",
+        "Not bad"
+    ]
+    X = getPaddingSequence(test_reviews, maxSeqLen, tokenizer)
+    valid_embedding = emb.getEmbeddingVector(X)
+    result = model.predict(valid_embedding, verbose=1, batch_size=256)
+    for x, y in zip(test_reviews, result):
+        logger.info(f'{list(y)[0]:.3f} - {x}')
+
+
+def inference(model_file_path, x_validation):
     valid_embedding = emb.getEmbeddingVector(x_validation)
-
     m = load_model(model_file_path, custom_objects={'SeqSelfAttention': SeqSelfAttention})
-
     y_pred = m.predict(valid_embedding, verbose=1, batch_size=256)
     y_pred = [ 1 if y > 0.5 else 0 for y in y_pred ]
 
+    test(m)
+
+    return y_pred
+
+def predict(x_validation, y_validation, model_file_path):
+    y_pred = inference(model_file_path, x_validation)
     logger.info(accuracy_score(y_validation, y_pred))
     logger.info(classification_report(y_validation, y_pred, target_names=target_names))
 
@@ -68,31 +86,8 @@ for modelFile in modelFiles:
 
     if modelFilePath.find('anime') >= 0:
         X_vali, Y_vali, anime_X, anime_Y = loadAnimePickle(maxSequenceLength, tokenizer, USE_PICKLE)
-        datasetName = '/data/myanimelist-sts.pkl'
-        with open(datasetName, 'rb') as p:
-            X, Y = pickle.load(p)
-
-            X_pos = list()
-            X_neg = list()
-            Y_pos = list()
-            Y_neg = list()
-
-            for i, score in enumerate(tqdm(Y, ascii=True)):
-                text = cleanText(X[i])
-
-                if int(score)>=6:
-                    X_pos.append(text)
-                    Y_pos.append(1)
-                else:
-                    X_neg.append(text)
-                    Y_neg.append(0)
-
-            X = X_pos + X_neg
-            Y = Y_pos + Y_neg
-            X_vali = getPaddingSequence(X, 128, tokenizer)         
-            Y_vali = np.asarray(Y)
-
         predict(X_vali, Y_vali, modelFilePath)
+
 
     if modelFilePath.find('sst2') >= 0:
         X_vali, Y_vali, sst2_X_train, sst2_Y_train = loadSST2(maxSequenceLength, tokenizer, USE_PICKLE)
