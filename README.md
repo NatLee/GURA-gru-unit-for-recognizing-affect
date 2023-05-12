@@ -2,7 +2,7 @@
 
 ![](./doc/model.png)
 
-GURA, short for GRU Unit for Recognizing Affect, is a simply sentiment analysis model that leverages the power of `Bidirectional GRU` and `Self-attention` mechanisms.
+GURA, short for GRU Unit for Recognizing Affect, is a simply sentiment classification model that leverages the power of `Bidirectional GRU` and `Self-attention` mechanisms.
 
 ## Dataset
 
