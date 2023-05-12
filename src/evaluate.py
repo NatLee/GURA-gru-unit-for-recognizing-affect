@@ -1,7 +1,9 @@
 import os
 import argparse
-import logging
 import pickle
+
+from loguru import logger
+
 from keras.models import load_model
 from sklearn.metrics import classification_report, accuracy_score, roc_curve, auc
 
@@ -11,7 +13,6 @@ from dataLoader import *
 from model import *
 
 os.environ['CUDA_VISIBLE_DEVICES'] = '0'
-logging.basicConfig(level=logging.DEBUG,format='%(asctime)s - %(levelname)s : %(message)s')
 
 # python -i main.py --imdb --sst2 --mpqa --mr --subj --anime
 parser = argparse.ArgumentParser(description='Dataset parse.')
@@ -23,43 +24,51 @@ parser.add_argument('--subj', action='store', nargs='?', const=True, default=Fal
 parser.add_argument('--anime', action='store', nargs='?', const=True, default=False, type=bool)
 config = parser.parse_args()
 
-EMB_WEIGHT_PATH = 'embeddingLayerWeight.h5'
-PRETRAIN_EMB_WEIGHT_PATH = 'wordVector/glove.840B.300d.txt'
 USE_PICKLE = True
 embeddingDim = 300
 maxSequenceLength = 128
-epochs = 100
-batchSize = 300
-modelName = 'modelLstmCnn'
-modelFolder = Path('models/' + modelName)
+
+modelName = 'modelOurs'
+
+modelFolder = Path('/model') / modelName
 modelFiles = [x for x in modelFolder.glob('**/*.h5') if x.is_file()]
 target_names = ['Negative', 'Positive']
 
-tokenizer = loadTokenizer()
+tokenizer = loadTokenizer(tokenizerPath='/model/big-tokenizer.pkl')
 
-logging.info('Load embedding Layer.')
-emb = EmbeddingPrediction(modelWeightPath=EMB_WEIGHT_PATH, wordVectorPath=PRETRAIN_EMB_WEIGHT_PATH, tokenizer=tokenizer, embeddingDim=embeddingDim)
+logger.info('Load embedding Layer.')
+emb = EmbeddingPrediction(tokenizer=tokenizer, embeddingDim=embeddingDim)
+
+def predict(x_validation, y_validation, model_file_path):
+    valid_embedding = emb.getEmbeddingVector(x_validation)
+
+    m = load_model(model_file_path, custom_objects={'SeqSelfAttention': SeqSelfAttention})
+
+    y_pred = m.predict(valid_embedding, verbose=1, batch_size=256)
+    y_pred = [ 1 if y > 0.5 else 0 for y in y_pred ]
+
+    logger.info(accuracy_score(y_validation, y_pred))
+    logger.info(classification_report(y_validation, y_pred, target_names=target_names))
 
 for modelFile in modelFiles:
     modelFilePath = modelFile.absolute().as_posix()
-    print(modelFilePath)
+    logger.info(f'Model file path -> {modelFilePath}')
 
     if modelFilePath.find('imdb') >= 0:
-        #X_vali, Y_vali, imdb_X_train, imdb_Y_train = loadOfficialIMDB(maxSequenceLength, tokenizer, USE_PICKLE)
-        continue
+        X_vali, Y_vali, imdb_X_train, imdb_Y_train = loadOfficialIMDB(maxSequenceLength, tokenizer, USE_PICKLE)
+        predict(X_vali, Y_vali, modelFilePath)
 
-    elif modelFilePath.find('mpqa') >= 0:
-        #X_vali, Y_vali, mpqa_X, mpqa_Y = loadMPQA(maxSequenceLength, tokenizer, USE_PICKLE)
-        continue
+    if modelFilePath.find('mpqa') >= 0:
+        X_vali, Y_vali, mpqa_X, mpqa_Y = loadMPQA(maxSequenceLength, tokenizer, USE_PICKLE)
+        predict(X_vali, Y_vali, modelFilePath)
 
-    elif modelFilePath.find('mr') >= 0:
-        #X_vali, Y_vali, mr_X, mr_Y = loadMR(maxSequenceLength, tokenizer, USE_PICKLE)
-        continue
+    if modelFilePath.find('mr') >= 0:
+        X_vali, Y_vali, mr_X, mr_Y = loadMR(maxSequenceLength, tokenizer, USE_PICKLE)
+        predict(X_vali, Y_vali, modelFilePath)
 
-    elif modelFilePath.find('anime') >= 0:
-        #X_vali, Y_vali, anime_X, anime_Y = loadAnimePickle(maxSequenceLength, tokenizer, USE_PICKLE)
-
-        datasetName = 'dataset/animeReviewsSkipThoughtSummarization.pkl'
+    if modelFilePath.find('anime') >= 0:
+        X_vali, Y_vali, anime_X, anime_Y = loadAnimePickle(maxSequenceLength, tokenizer, USE_PICKLE)
+        datasetName = '/data/myanimelist-sts.pkl'
         with open(datasetName, 'rb') as p:
             X, Y = pickle.load(p)
 
@@ -83,25 +92,11 @@ for modelFile in modelFiles:
             X_vali = getPaddingSequence(X, 128, tokenizer)         
             Y_vali = np.asarray(Y)
 
-        #continue
+        predict(X_vali, Y_vali, modelFilePath)
 
-    elif modelFilePath.find('sst2') >= 0:
-        #X_vali, Y_vali, sst2_X_train, sst2_Y_train = loadSST2(maxSequenceLength, tokenizer, USE_PICKLE)
-        continue
-
-    else:
-        continue
-
-    X_vali_emb = emb.getEmbeddingVector(X_vali)
-
-    m = load_model(modelFilePath, custom_objects={'SeqSelfAttention': SeqSelfAttention})
-
-    y_pred = m.predict(X_vali_emb, verbose=1, batch_size=1024)
-    y_pred = [ 1 if y > 0.5 else 0 for y in y_pred ]
-
-    print(accuracy_score(Y_vali, y_pred))
-    print(classification_report(Y_vali, y_pred, target_names=target_names))
-
+    if modelFilePath.find('sst2') >= 0:
+        X_vali, Y_vali, sst2_X_train, sst2_Y_train = loadSST2(maxSequenceLength, tokenizer, USE_PICKLE)
+        predict(X_vali, Y_vali, modelFilePath)
 
 '''
 with open('prediction.pkl', 'wb') as p:

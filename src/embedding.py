@@ -8,12 +8,14 @@ import requests
 import zipfile
 import pathlib
 import os
-import logging
+from loguru import logger
 
 class EmbeddingPrediction(object):
 
-    def __init__(self, modelWeightPath:str=None, wordVectorPath:str=None, tokenizer:Tokenizer=None, embeddingDim:int=300, trainable:bool=False):
-        
+    def __init__(self, modelWeightPath:str=None, wordVectorPath:str=None, tokenizer:Tokenizer=None, embeddingDim:int=300, trainable:bool=False, model_path = '/model'):
+
+        self.model_path = pathlib.Path(model_path)
+
         self.__wordVectorPath = wordVectorPath
         self.__modelWeightPath = modelWeightPath
 
@@ -32,21 +34,27 @@ class EmbeddingPrediction(object):
         K.set_floatx(self.__embeddingType)
 
         model = Sequential()
+        
+        if self.__modelWeightPath is None:
+            model_weight_path = self.model_path / 'embeddingLayerWeight.h5'
+            if model_weight_path.exists():
+                self.__modelWeightPath = model_weight_path
+        
         if self.__modelWeightPath is not None:
-            logging.info('Find embedding weight path. Now loading...')
+            logger.info('Find embedding weight path. Now loading...')
             model.add(Embedding(input_dim=self.__wordIndexSize, output_dim=self.__embeddingDim, dtype=self.__embeddingType, trainable=self.__trainable))
             model.load_weights(self.__modelWeightPath, by_name=True)
         else:
-            print('[WARNING] Embedding weight path not found. Now Generating...')
+            logger.warning('Embedding weight path not found. Now Generating...')
             wordVectorMatrix = self.__getWordVectorMatrix()
             model.add(Embedding(input_dim=self.__wordIndexSize, output_dim=self.__embeddingDim, dtype=self.__embeddingType, weights=[wordVectorMatrix], trainable=self.__trainable))
             model = self.__getEmbeddingModel(model)
         return model
 
-    def __getEmbeddingModel(self, model:Model, modelWeightPath:str='embeddingLayerWeight.h5') -> Model:
-        model.compile(loss='mse', optimizer='rmsprop', metrics=['accuracy'])
+    def __getEmbeddingModel(self, model:Model, modelWeightPath:str='/model/embeddingLayerWeight.h5') -> Model:
+        model.compile(loss='mse', optimizer='rmsprop', metrics=['acc'])
         print(model.summary())
-        logging.info('Saving weight in ./%s' % modelWeightPath)
+        logger.info('Saving weight in ./%s' % modelWeightPath)
         model.save_weights(modelWeightPath)
         return model
 
@@ -68,13 +76,24 @@ class EmbeddingPrediction(object):
 
     def __loadWordVector(self):
         wordDict = dict()
-        
+
+        gloveZipFileDownloadPath = self.model_path / 'glove.840B.300d.zip'
+        wordVecFolderPath = self.model_path / 'wordVector'
+
+        # ====================
+        # check path exists
+        if self.__wordVectorPath is None:
+            vector_path = wordVecFolderPath / 'glove.840B.300d.txt'
+            if vector_path.exists():
+                self.__wordVectorPath = vector_path
+        # ====================
+
         if self.__wordVectorPath is None:
             print('[WARNING] Word vector file path not found.')
 
             gloveUrl = 'http://nlp.stanford.edu/data/glove.840B.300d.zip'
-            gloveZipFileDownloadPath = pathlib.Path('glove.840B.300d.zip')
-            wordVecFolderPath = pathlib.Path('wordVector')
+
+            print(f'[WARNING] Downloading from `{gloveUrl}` into `model` folder')
 
             if not wordVecFolderPath.is_dir():
                 wordVecFolderPath.mkdir()
@@ -87,7 +106,7 @@ class EmbeddingPrediction(object):
                     self.__wordVectorPath = (wordVecFolderPath / unzipFile).absolute().as_posix()
                     break
 
-        logging.info('Load pretrain word vector weight file.')
+        logger.info('Load pre-trained word vector weight file.')
         with open(self.__wordVectorPath, 'r', encoding='utf-8') as embFile:
             for line in tqdm(embFile.readlines(), ascii = True):
                 line = line[:-1]
@@ -103,11 +122,11 @@ class EmbeddingPrediction(object):
     def __downloadFile(self, url:str, filePath:pathlib.Path):
         # NOTE the stream=True parameter below
         with requests.get(url, stream=True) as r:
-            logging.info('Downloading file... [{}]'.format(filePath.name))
+            logger.info('Downloading file... [{}]'.format(filePath.name))
             r.raise_for_status()
             with open(filePath.absolute().as_posix(), 'wb') as f:
                 pbar = tqdm(unit='B', total=int(r.headers['Content-Length']), ascii=True)
-                for chunk in r.iter_content(chunk_size=8192): 
+                for chunk in r.iter_content(chunk_size=8192):
                     if chunk: # filter out keep-alive new chunks
                         pbar.update (len(chunk))
                         _ = f.write(chunk)
@@ -115,7 +134,7 @@ class EmbeddingPrediction(object):
 
     def __unzip(self, fileName:str, folderPath:pathlib.Path):
         with open(fileName, 'rb') as f:
-            logging.info('Now unzipping file... [{}]'.format(fileName))
+            logger.info(f'Now unzipping file... [{fileName}]')
             z = zipfile.ZipFile(f)
             for name in z.namelist():
                 z.extract(name, folderPath.absolute().as_posix())
