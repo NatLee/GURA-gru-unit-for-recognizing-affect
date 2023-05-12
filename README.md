@@ -113,9 +113,29 @@ docker-compose build
 
 When you successfully train the model with specified dataset, you cat get the plot in the `./model`.
 
+- Anime
+
+    ![](./doc/model-anime.png)
+
 - IMDB
 
     ![](./doc/model-imdb.png)
+
+- MPQA
+
+    ![](./doc/model-mpqa.png)
+
+- MR
+
+    ![](./doc/model-mr.png)
+
+- SST2
+
+    ![](./doc/model-sst2.png)
+
+- SUBJ
+
+    ![](./doc/model-subj.png)
 
 
 ## Citation
