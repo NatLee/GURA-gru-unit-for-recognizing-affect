@@ -4,6 +4,8 @@
 
 GURA, short for GRU Unit for Recognizing Affect, is a simply sentiment classification model that leverages the power of `Bidirectional GRU` and `Self-attention` mechanisms.
 
+> This is a sample project for a dataset of MyAnimeList in [myanimelist-comment-dataset](https://www.kaggle.com/datasets/natlee/myanimelist-comment-dataset).
+
 ## Dataset
 
 You can get the dataset from Hugging Face.
