@@ -1,7 +1,7 @@
 
-models/*
-wordVector/*
-dataset/*
+model/*
+*/wordVector/*
+data/*
 
 __pycache__
 .vscode
@@ -13,11 +13,8 @@ __pycache__
 .DS_Store
 desktop.ini
 
-*.txt
-
 .vscode
 
 *.zip
-
 
 accHistory.json
