@@ -14,7 +14,7 @@ sentences = []
 # =====================
 # Anime Reviews
 # =====================
-dataset = '/data/animeReviewsSkipThoughtSummarization.pkl'
+dataset = '/data/myanimelist-sts.pkl'
 if check_data_path(dataset):
     with open(dataset, 'rb') as p:
         X, Y = pickle.load(p)

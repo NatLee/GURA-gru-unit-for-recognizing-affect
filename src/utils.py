@@ -1,13 +1,13 @@
 import re
 import pickle
 import json
-import logging
 from pathlib import Path
+
+from loguru import logger
+
 from unidecode import unidecode
 from sklearn.manifold import TSNE
-
 import matplotlib.pyplot as plt
-
 import numpy as np
 
 from keras.preprocessing.sequence import pad_sequences
@@ -122,7 +122,6 @@ def cleanText(text):
         return [w for w in wordlist if w not in stopwords]
 
     text = ' '.join(removeStopwords(text.split(), stopwords))
-    
     text = text.strip()
 
     return text
@@ -130,23 +129,22 @@ def cleanText(text):
 def getPaddingSequence(wordList:list, maxSequenceLength:int ,tokenizer:Tokenizer):
     return pad_sequences(tokenizer.texts_to_sequences(wordList), maxlen=maxSequenceLength)
 
-def loadTokenizer(tokenizerPath:str='tokenizer_big.pickle'):
-    logging.info('Load tokenizer.')
+def loadTokenizer(tokenizerPath:str='tokenizer-big.pkl'):
+    logger.info('Load tokenizer.')
     with open(tokenizerPath, 'rb') as p:
         tokenizer = pickle.load(p)
     return tokenizer
-
 
 def saveAccHist(currentHist:History, datasetName:str, accHistoryFilePath:str='accHistory.json'):
     accHistoryFilePath = Path(accHistoryFilePath)
     accHistoryFilePathString = accHistoryFilePath.absolute().as_posix()
     if not accHistoryFilePath.exists():
-        with open(accHistoryFilePathString, 'w') as f:
+        with open(accHistoryFilePathString, 'w', encoding='utf-8') as f:
             json.dump({}, f)
-    with open(accHistoryFilePathString, 'r') as f:
+    with open(accHistoryFilePathString, 'r', encoding='utf-8') as f:
         accHistory = json.load(f)
     accHistory[datasetName] = sorted(currentHist.history['val_acc'])[-1]
-    with open(accHistoryFilePathString, 'w') as f:
+    with open(accHistoryFilePathString, 'w', encoding='utf-8') as f:
         json.dump(accHistory, f)
 
 

@@ -15,7 +15,9 @@ from utils import cleanText, getPaddingSequence, saveTrainingImg
 from custom import *
 
 
-def trainModel(trainingData:tuple, model:Model, modelName:str, datasetName:str, epochs:int=100, validationData:tuple=None, patience:int=5, batchSize:int=1024):
+def trainModel(
+    trainingData:tuple, model:Model, modelName:str, datasetName:str, epochs:int=100, validationData:tuple=None, patience:int=5, batchSize:int=1024
+    ):
     
     modelsPath = pathlib.Path('/model')
     if not modelsPath.exists():
@@ -58,7 +60,7 @@ def modelOurs(maxSequenceLength:int, embeddingDim:int):
 
     model = Model(inputs=inputs, outputs=output)
 
-    model.compile(loss=keras.losses.binary_crossentropy, optimizer='adam', metrics=['accuracy'])
+    model.compile(loss=keras.losses.binary_crossentropy, optimizer='adam', metrics=['acc'])
 
     model.summary()
     return model
@@ -76,7 +78,7 @@ def modelCnn(maxSequenceLength:int, embeddingDim:int):
 
     model = Model(inputs=inputs, outputs=output)
 
-    model.compile(loss=keras.losses.binary_crossentropy, optimizer='adam', metrics=['accuracy'])
+    model.compile(loss=keras.losses.binary_crossentropy, optimizer='adam', metrics=['acc'])
     
     model.summary()
     return model
@@ -93,7 +95,7 @@ def modelLstm(maxSequenceLength:int, embeddingDim:int):
 
     model = Model(inputs=inputs, outputs=output)
 
-    model.compile(loss=keras.losses.binary_crossentropy, optimizer='adam', metrics=['accuracy'])
+    model.compile(loss=keras.losses.binary_crossentropy, optimizer='adam', metrics=['acc'])
     
     model.summary()
     return model
@@ -112,7 +114,7 @@ def modelLstmCnn(maxSequenceLength:int, embeddingDim:int):
 
     model = Model(inputs=inputs, outputs=output)
 
-    model.compile(loss=keras.losses.binary_crossentropy, optimizer='adam', metrics=['accuracy'])
+    model.compile(loss=keras.losses.binary_crossentropy, optimizer='adam', metrics=['acc'])
 
     model.summary()
     return model
