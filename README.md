@@ -8,6 +8,8 @@ GURA, short for GRU Unit for Recognizing Affect, is a simply sentiment analysis 
 
 You can get the dataset from Hugging Face.
 
+https://huggingface.co/datasets/NatLee/sentiment-classification-dataset-bundle
+
 ```bash
 # Make sure you have git-lfs installed (https://git-lfs.com)
 git lfs install
