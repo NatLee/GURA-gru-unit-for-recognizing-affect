@@ -4,15 +4,8 @@ services:
     build:
       context: .
       dockerfile: ./Dockerfile
-    container_name: sentiment-runner
+    image: sentiment-image:latest
     volumes:
       - ./src:/src
       - ./data:/data
       - ./model:/model
-    command: bash docker-entrypoint.sh
-    #deploy:
-    #  resources:
-    #    reservations:
-    #      devices:
-    #        - driver: nvidia
-    #          capabilities: [gpu]
