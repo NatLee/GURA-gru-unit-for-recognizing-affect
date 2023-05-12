@@ -1,0 +1,8 @@
+keras==2.3.1
+sklearn
+scikit-learn
+tqdm
+matplotlib
+requests
+unidecode
+pandas
