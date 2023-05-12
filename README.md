@@ -138,6 +138,16 @@ When you successfully train the model with specified dataset, you cat get the pl
     ![](./doc/model-subj.png)
 
 
+## Spec with the Training Machine
+
+```
+OS: Ubuntu 22.04.2 LTS x86_64
+Kernel: 5.19.0-41-generic
+Shell: zsh 5.8.1
+CPU: 12th Gen Intel i5-1235U (12) @ 4.400GHz
+Memory: 15770MiB
+```
+
 ## Citation
 
 ```
